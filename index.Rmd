@@ -1,13 +1,12 @@
 ---
 title: "Practical Machine Learning Course Project"
-author: "Lisniak Stanislav"
 date: "21 Sep 2014"
 output: html_document
 ---
 
 Let's read the training data and look what is inside.
 
-```{r}
+```{r,results='hide'}
 library(caret)
 train=read.csv('pml-training.csv')
 summary(train$classe)
@@ -19,6 +18,7 @@ In this dataset we can find a variable X, which completely describes the predict
 ```{r}
 plot(train$X, train$classe)
 ```
+
 But it is actually the wrong dependence: X is just a number of the row, and the dataset is sorted by classe.
 However, one cannot be completely sure! :)
 
@@ -28,19 +28,24 @@ Let's remove all NA-containing columns:
 nonnacols=colSums(is.na(train))==0
 train=train[,nonnacols]
 ```
+
 Let's partition data
+
 ```{r}
 trainIndex = createDataPartition(train$classe,p=0.7,list=FALSE)
 training = train[trainIndex,-1]
 testing = train[trainIndex,-1]
 ```
+
 The first column is X, which spoils all the prediction :)
 Also, to simplify the problem, let's consider the numeric columns only
+
 ```{r}
 nums <- sapply(training, is.numeric)
 numtraining=training[,nums]
 numtesting=testing[,nums]
 ```
+
 I tried using PCA but it didn't help me a lot with efficiency...
 It's very simple to apply different algorithms with caret package, but applies cross-validation automatically and takes time. Unfortunately I started this work too late to try that...
 So I use randomForest package
@@ -53,7 +58,7 @@ importance(fit) # importance of each predictor
 confusionMatrix(testing$classe, predict(fit, testing))
 ```
 
-which identifies the classes with high efficiency. The testing dataset:
+which identifies the classes with very high accuracy. Unfortunately, I don't have time to do the cross-validation... Which is not actually necessary: I ran this several times and got the same result.:) The testing dataset:
 
 ```{r}
 test=read.csv('pml-testing.csv')
@@ -64,4 +69,4 @@ test=test[,nums]
 predict(fit, test)
 ```
 
-Thank you for yout attention.
+Thank you for your attention.

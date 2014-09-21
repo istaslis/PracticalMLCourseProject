@@ -5,23 +5,63 @@ date: "21 Sep 2014"
 output: html_document
 ---
 
+Let's read the training data and look what is inside.
 
 ```{r}
-data=read.csv('pml-testing.csv')
+library(caret)
+train=read.csv('pml-training.csv')
+summary(train$classe)
+head(train)
 ```
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Our problem is to predict the values of train$classe based on other variables.
+In this dataset we can find a variable X, which completely describes the prediction. The following plot proves that:
+```{r}
+plot(train$X, train$classe)
+```
+But it is actually the wrong dependence: X is just a number of the row, and the dataset is sorted by classe.
+However, one cannot be completely sure! :)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+In the dataset there are many missing (NA) values, and also string values, which I don't want to include now in the classification because I don't have time, and it's always good to process what is simple and then improve the model adding more details.
+Let's remove all NA-containing columns:
+```{r}
+nonnacols=colSums(is.na(train))==0
+train=train[,nonnacols]
+```
+Let's partition data
+```{r}
+trainIndex = createDataPartition(train$classe,p=0.7,list=FALSE)
+training = train[trainIndex,-1]
+testing = train[trainIndex,-1]
+```
+The first column is X, which spoils all the prediction :)
+Also, to simplify the problem, let's consider the numeric columns only
+```{r}
+nums <- sapply(training, is.numeric)
+numtraining=training[,nums]
+numtesting=testing[,nums]
+```
+I tried using PCA but it didn't help me a lot with efficiency...
+It's very simple to apply different algorithms with caret package, but applies cross-validation automatically and takes time. Unfortunately I started this work too late to try that...
+So I use randomForest package
 
 ```{r}
-summary(cars)
+library(randomForest)
+fit <- randomForest(training$classe ~ .,   data=numtraining)
+print(fit) # view results 
+importance(fit) # importance of each predictor
+confusionMatrix(testing$classe, predict(fit, testing))
 ```
 
-You can also embed plots, for example:
+which identifies the classes with high efficiency. The testing dataset:
 
-```{r, echo=FALSE}
-plot(cars)
+```{r}
+test=read.csv('pml-testing.csv')
+nonnacols=colSums(is.na(test))==0
+test=test[,nonnacols]
+nums <- sapply(test, is.numeric)
+test=test[,nums]
+predict(fit, test)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Thank you for yout attention.
